@@ -1,5 +1,3 @@
-pandas
 polars
-pyarrow
 psycopg[binary]
 python-dotenv
