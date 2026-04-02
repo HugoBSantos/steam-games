@@ -1,0 +1,4 @@
+GRANT CREATE ON SCHEMA silver TO gabriel;
+GRANT CREATE ON SCHEMA silver TO samuel;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA silver TO anthony;
