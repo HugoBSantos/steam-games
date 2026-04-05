@@ -1,4 +1,5 @@
 import polars as pl
+import psycopg
 from pathlib import Path
 import os
 
@@ -7,18 +8,17 @@ BRONZE_PATH = Path().cwd() / "data" / "bronze" / "games.csv"
 
 def create_silver():
     
-    old_columns = [
-        "AppID", "Name", "Release date", "Estimated owners", "Peak CCU",
-        "Required age", "Price", "Discount", "DLC count", "About the game",
-        "Supported languages", "Full audio languages", "Reviews", "Header image",
-        "Website", "Support url", "Support email", "Windows", "Mac", "Linux",
-        "Metacritic score", "Metacritic url", "User score", "Positive", "Negative",
-        "Score rank", "Achievements", "Recommendations", "Notes",
-        "Average playtime forever", "Average playtime two weeks",
-        "Median playtime forever", "Median playtime two weeks",
-        "Developers", "Publishers", "Categories", "Genres", "Tags",
-        "Screenshots", "Movies"
+    columns = [
+        "game_id", "name", "release_date", "estimated_owners", "peak_ccu",
+        "required_age", "price", "discount", "dlc_count", "about_the_game",
+        "supported_languages", "full_audio_languages", "reviews", "header_image",
+        "website", "support_url", "support_email", "windows", "mac", "linux",
+        "metacritic_score", "metacritic_url", "user_score", "positive", "negative",
+        "score_rank", "achievements", "recommendations", "notes",
+        "average_playtime_forever", "average_playtime_two_weeks",
+        "median_playtime_forever", "median_playtime_two_weeks",
+        "developers", "publishers", "categories", "genres", "tags",
+        "screenshots", "movies"
     ]
-    new_columns = [col.lower().replace(" ", "_") for col in old_columns]
     
-    df = pl.read_csv(BRONZE_PATH, skip_rows=1, new_columns=new_columns)
+    lf = pl.scan_csv(BRONZE_PATH, skip_rows=1, new_columns=columns)
