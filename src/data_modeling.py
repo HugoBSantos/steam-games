@@ -6,6 +6,26 @@ import os
 BRONZE_PATH = Path().cwd() / "data" / "bronze" / "games.csv"
 
 
+def clean_and_split_str(column_name: str) -> pl.Expr:
+    html_regex = r"&amp;lt;.*?&amp;gt;|<.*?>|&amp;[a-z]+;"
+    escape_regex = r"\\r|\\n|\\t"
+    paren_regex = r"\(.*?\)"
+    bbcode_regex = r"\[/?b\]"
+    
+    return (
+        pl.col(column_name)
+        .str.strip_chars("[]")
+        .str.replace_all("'", "")
+        .str.replace_all(escape_regex, ",")
+        .str.replace_all(html_regex, ",")
+        .str.replace_all(";", ",")
+        .str.replace_all(bbcode_regex, "")
+        .str.replace_all(paren_regex, "")
+        .str.replace_all("#lang_", "")
+        .str.split(",")
+    )
+
+
 def create_silver():
     
     columns = [
