@@ -1,7 +1,5 @@
 import polars as pl
-import psycopg
 from pathlib import Path
-import os
 
 from src.utils.etl_utils import transform_multivalued_column
 
@@ -35,9 +33,35 @@ def create_silver():
             "genres": "genre_id",
             "tags": "tag_id",
             "developers": "developer_id",
-            "publishers": "publiser_id"
+            "publishers": "publisher_id"
         }.items()
     }
     for table_name, dfs in many_to_many_tables.items():
         dataframes.append((table_name, dfs[0]))
         dataframes.append((table_name, dfs[1]))
+    
+    df_games = (
+        lf.collect()
+        .join(many_to_many_tables["developers"][1], on="game_id", how="left")
+        .join(many_to_many_tables["publishers"][1], on="game_id", how="left")
+        .select([
+            "game_id", "developer_id", "publisher_id", "name", "release_date", "estimated_owners",
+            "peak_ccu", "required_age", "price", "discount", "dlc_count", "about_the_game",
+            "reviews", "header_image", "website", "support_url", "support_email",
+            "windows", "mac", "linux", "notes"
+        ])
+    )
+    dataframes.append(("games", df_games))
+    print(df_games.head(3))
+    
+    df_metrics = (
+        lf.select([
+            "game_id", "metacritic_score", "metacritic_url", "user_score", "positive", "negative",
+            "score_rank", "achievements", "recommendations", "average_playtime_forever",
+            "average_playtime_two_weeks", "median_playtime_forever", "median_playtime_two_weeks"
+        ])
+        .collect()
+        .with_row_index(name="metric_id", offset=1)
+    )
+    dataframes.append(("metrics", df_metrics))
+    print(df_metrics.head(3))
