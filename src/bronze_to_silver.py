@@ -1,5 +1,6 @@
 import polars as pl
 from pathlib import Path
+from time import time
 
 from src.utils.etl_utils import transform_multivalued_column, clean_and_split_str
 
@@ -7,6 +8,8 @@ BRONZE_PATH = Path().cwd() / "data" / "bronze" / "games.csv"
 
 
 def create_silver():
+    
+    start_time = time()
     
     dataframes = []
     columns = [
@@ -24,6 +27,7 @@ def create_silver():
     
     lf = pl.scan_csv(BRONZE_PATH, skip_rows=1, new_columns=columns)
     
+    print("[INFO] Creating dataframes for many-to-many tables...")
     many_to_many_config = {
         "supported_languages": ("language_id", "supported_languages", "game_language"),
         "categories":          ("category_id", "categories",          "game_category"),
@@ -41,6 +45,7 @@ def create_silver():
         dataframes.append((entity_table, dfs[0]))
         dataframes.append((assoc_table,  dfs[1]))
     
+    print("[INFO] Creating tables for games and metrics...")
     df_games = (
         lf.collect()
         .join(many_to_many_tables["developers"][1], on="game_id", how="left")
@@ -53,7 +58,6 @@ def create_silver():
         ])
     )
     dataframes.append(("games", df_games))
-    print(df_games.head(3))
     
     df_metrics = (
         lf.select([
@@ -65,8 +69,8 @@ def create_silver():
         .with_row_index(name="metric_id", offset=1)
     )
     dataframes.append(("metrics", df_metrics))
-    print(df_metrics.head(3))
     
+    print("[INFO] Creating tables for screenshots and movies...")
     df_screenshots, df_movies = (
         lf.with_columns(clean_and_split_str("screenshots").alias("url"))
         .explode("url")
@@ -84,5 +88,5 @@ def create_silver():
     )
     dataframes.append(("screenshots", df_screenshots))
     dataframes.append(("movies", df_movies))
-    print(df_screenshots.head(3))
-    print(df_movies.head(3))
+    
+    print(f"[INFO] Transformed data successfully in {time() - start_time:.2f} seconds!")
