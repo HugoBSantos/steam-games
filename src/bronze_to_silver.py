@@ -24,21 +24,22 @@ def create_silver():
     
     lf = pl.scan_csv(BRONZE_PATH, skip_rows=1, new_columns=columns)
     
-    many_to_many_tables = {
-        column_name: transform_multivalued_column(lf, column_name, id_name)
-        
-        for column_name, id_name in {
-            "supported_languages": "language_id",
-            "categories": "category_id",
-            "genres": "genre_id",
-            "tags": "tag_id",
-            "developers": "developer_id",
-            "publishers": "publisher_id"
-        }.items()
+    many_to_many_config = {
+        "supported_languages": ("language_id", "supported_languages", "game_language"),
+        "categories":          ("category_id", "categories",          "game_category"),
+        "genres":              ("genre_id",    "genres",              "game_genre"),
+        "tags":                ("tag_id",      "tags",                "tags_games"),
+        "developers":          ("developer_id","developers",          "game_developer"),
+        "publishers":          ("publisher_id","publishers",          "game_publisher"),
     }
-    for table_name, dfs in many_to_many_tables.items():
-        dataframes.append((table_name, dfs[0]))
-        dataframes.append((table_name, dfs[1]))
+    many_to_many_tables = {
+        table_name: transform_multivalued_column(lf, table_name, id_name)
+        for table_name, (id_name, _, _) in many_to_many_config.items()
+    }
+    for column_name, (_, entity_table, assoc_table) in many_to_many_config.items():
+        dfs = many_to_many_tables[column_name]
+        dataframes.append((entity_table, dfs[0]))
+        dataframes.append((assoc_table,  dfs[1]))
     
     df_games = (
         lf.collect()
