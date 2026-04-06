@@ -36,7 +36,7 @@ def clean_and_split_str(column_name: str) -> pl.Expr:
     )
 
 
-def transform_multivalued_column(lf: pl.LazyFrame, column_name: str, id_name: str):
+def transform_multivalued_column(lf: pl.LazyFrame, column_name: str, id_name: str) -> tuple[pl.DataFrame, pl.DataFrame]:
     
     lf_exploded = (
         lf.select(["game_id", column_name])
