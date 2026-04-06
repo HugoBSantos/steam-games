@@ -10,6 +10,7 @@ BRONZE_PATH = Path().cwd() / "data" / "bronze" / "games.csv"
 
 def create_silver():
     
+    dataframes = []
     columns = [
         "game_id", "name", "release_date", "estimated_owners", "peak_ccu",
         "required_age", "price", "discount", "dlc_count", "about_the_game",
@@ -24,3 +25,19 @@ def create_silver():
     ]
     
     lf = pl.scan_csv(BRONZE_PATH, skip_rows=1, new_columns=columns)
+    
+    many_to_many_tables = {
+        column_name: transform_multivalued_column(lf, column_name, id_name)
+        
+        for column_name, id_name in {
+            "supported_languages": "language_id",
+            "categories": "category_id",
+            "genres": "genre_id",
+            "tags": "tag_id",
+            "developers": "developer_id",
+            "publishers": "publiser_id"
+        }.items()
+    }
+    for table_name, dfs in many_to_many_tables.items():
+        dataframes.append((table_name, dfs[0]))
+        dataframes.append((table_name, dfs[1]))
