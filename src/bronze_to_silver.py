@@ -1,7 +1,7 @@
 import polars as pl
 from pathlib import Path
 
-from src.utils.etl_utils import transform_multivalued_column
+from src.utils.etl_utils import transform_multivalued_column, clean_and_split_str
 
 BRONZE_PATH = Path().cwd() / "data" / "bronze" / "games.csv"
 
@@ -65,3 +65,23 @@ def create_silver():
     )
     dataframes.append(("metrics", df_metrics))
     print(df_metrics.head(3))
+    
+    df_screenshots, df_movies = (
+        lf.with_columns(clean_and_split_str("screenshots").alias("url"))
+        .explode("url")
+        .filter((pl.col("url").is_not_null()) & (pl.col("url") != ""))
+        .select(["game_id", "url"])
+        .with_row_index(name="screenshot_id", offset=1)
+        .collect(),
+        
+        lf.with_columns(clean_and_split_str("movies").alias("url"))
+        .explode("url")
+        .filter((pl.col("url").is_not_null()) & (pl.col("url") != ""))
+        .select(["game_id", "url"])
+        .with_row_index(name="movie_id", offset=1)
+        .collect()
+    )
+    dataframes.append(("screenshots", df_screenshots))
+    dataframes.append(("movies", df_movies))
+    print(df_screenshots.head(3))
+    print(df_movies.head(3))
