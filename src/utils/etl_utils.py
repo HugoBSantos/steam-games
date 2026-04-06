@@ -2,6 +2,19 @@ import polars as pl
 import psycopg
 import os
 
+def load_to_postgres(tables: list[tuple[str, pl.DataFrame]]):
+    
+    postgres_url = os.getenv("POSTGRES_URL")
+    
+    with psycopg.connect(postgres_url) as conn:
+        
+        for table_name, df in tables:
+            df.write_database(
+                table_name=table_name,
+                connection=conn,
+                engine="adbc",
+                if_table_exists="replace"
+            )
 
 def clean_and_split_str(column_name: str) -> pl.Expr:
     html_regex = r"&amp;lt;.*?&amp;gt;|<.*?>|&amp;[a-z]+;"
