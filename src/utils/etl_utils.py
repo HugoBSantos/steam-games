@@ -2,13 +2,13 @@ import polars as pl
 import psycopg
 import os
 
-def load_to_postgres(tables: list[tuple[str, pl.DataFrame]]):
+def load_to_postgres(dataframes: list[tuple[str, pl.DataFrame]]):
     
     postgres_url = os.getenv("POSTGRES_URL")
     
     with psycopg.connect(postgres_url) as conn:
         
-        for table_name, df in tables:
+        for table_name, df in dataframes:
             df.write_database(
                 table_name=table_name,
                 connection=conn,
